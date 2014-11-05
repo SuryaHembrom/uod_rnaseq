@@ -6,7 +6,7 @@ RNASeq read mapping of p capsici infected tomato leaves
 These analyses were done using STAR2.4. 
 Genomic databases are ITAG2.4 and Phyca11. Both were donwloaded from their original source and deposited in a single directory.
 
-The following commands were executed to create the genomic index file and run the analysis. The shell scripts that were called are included in the supplementary data. featureCounts generates read count tables and summary statistics that can be analysed in R, using edgeR.
+The following commands were executed to create the genomic index file and run the analysis. The shell scripts that were called are included in the supplementary data. 
 Path names need to be customised to the correct path
 
 #####Create index
@@ -22,3 +22,6 @@ Path names need to be customised to the correct path
 ```bash
 ./dirFeatureCountsEff.sh -i ~/OUTPUT_STAR/ -o ~/OUTPUT_FC/ -a /path/to/genome/databases/PhycaEff_manual.gtf
 ```
+
+featureCounts generates read count tables and summary statistics that can be analysed in R, using edgeR.
+Follow up in R Markdown files.
