@@ -1,0 +1,136 @@
+---
+title: "EdgeR P capsici"
+author: "R Stam"
+date: "1 October 2014"
+output: html_document
+---
+```{r, message=FALSE}
+library("edgeR")
+```
+
+This document shows RNASeq data analysis steps undertaken to find DEGs in *Phytophthora capsici* during early infection of tomato.
+
+Reading and filtering the data
+------------------------------
+
+Read in all data
+```{r}
+setwd("/Volumes/rstam/140822_STAR_FC/Inf2/")
+FcFiles = list.files(path="/Volumes/rstam/140822_STAR_FC/Inf2/", pattern="*.out.txt$")
+data <- lapply(FcFiles, read.table, sep="\t", header = TRUE)
+mdata = Reduce(function(...) merge(..., all=T), data)
+```
+
+Select right columns and rename to understandable names
+```{r}
+rownames(mdata) <- as.vector(mdata[,1])
+lenghts <- as.matrix(mdata[,6])
+mdata <- as.matrix(mdata[,7:31])
+colnames(mdata) <- c("rep1_infected_00h", "rep1_infected_16h", "rep1_infected_24h", "rep1_infected_04h", "rep1_infected_08h", 
+                      "rep2_infected_00h", "rep2_infected_16h", "rep2_infected_24h", "rep2_infected_04h", "rep2_infected_08h", 
+                      "rep3_infected_00h", "rep3_infected_16h", "rep3_infected_24h", "rep3_infected_04h", "rep3_infected_08h", 
+                      "rep4_infected_00h", "rep4_infected_16h", "rep4_infected_24h", "rep4_infected_04h", "rep4_infected_08h", 
+                      "rep5_infected_00h", "rep5_infected_16h", "rep5_infected_24h", "rep5_infected_04h", "rep5_infected_08h")
+```
+
+make Factors that tell us about the reps and 'treatments' or timepoints.
+```{r}
+treat <- factor(substring(colnames(mdata),15,17))
+treat <- relevel(treat, ref="00h")
+rep <- factor(substring(colnames(mdata),1,4))
+```
+
+Filter out genes with very low read count (< 3 reads / gene)
+```{r}
+keep <- rowSums(mdata>3) >= 3
+mdata <- mdata[keep, ]
+table(keep)
+```
+
+EdgeR Normalisation
+--------------
+
+Make and normalise object and inspect variation
+```{r}
+DGE <- DGEList(mdata, group = treat) # Make DGEList
+DGEN <- calcNormFactors(DGE, method = "RLE") # RLE normalisation
+par(mfrow = c(1,2))
+plotMDS(DGEN, main = "Labelled for timepoint", labels= c(rep(c("00h","16h","24h","04h","08h"),5)), col=rep(c("red","blue","green","magenta","black"),5))
+plotMDS(DGEN, main = "Labelled for batch", labels = c(rep("14",5),rep("22",5),rep("24",5),rep("28",5),rep("31",5)), col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5))) 
+```
+
+Estimate dispersion and batch effect
+```{r, message=FALSE}
+design <- model.matrix(~rep+treat) # both batch and timepoints
+rownames(design) <- colnames(DGEN)
+disp <- estimateGLMCommonDisp(DGEN, design, verbose=TRUE)
+disp <- estimateGLMTrendedDisp(disp, design)
+disp <- estimateGLMTagwiseDisp(disp, design)
+plotBCV(disp, main = "BVC Batch ~ Rep")
+```
+
+Marker gene expression
+---------------------
+```{r, message=FALSE}
+NormValues <- cpm(DGEN, normalized.lib.sizes=TRUE)
+NormValues <- NormValues[,c(1,6,11,16,21,4,9,14,19,24,5,10,15,20,25,2,7,12,17,22,3,8,13,18,23)]
+x <- list(1:5, 6:10, 11:15, 16:20, 21:25)
+NormValues_avg <- do.call(cbind, lapply(x, function(i) rowMeans(NormValues[, i])))
+summary(NormValues_avg)
+```
+
+Plot four marker genes as used in Jupe et al. 2014
+```{r, message=FALSE}
+par(mfrow = c(2,2))
+plot(NormValues_avg["8692",], type = "l", main = "HMP1", ylab = "Normalised Exp Value", xlab = "Time")#HMP1
+plot(NormValues_avg["510939",], type = "l", main = "CDC14", ylab = "Normalised Exp Value", xlab = "Time")#CDC14
+plot(NormValues_avg["107869",], type = "l", main = "NPP1", ylab = "Normalised Exp Value", xlab = "Time")#NPP1
+plot(NormValues_avg["576734",], type = "l", main = "TUB", ylab = "Normalised Exp Value", xlab = "Time")#TUB
+```
+
+Plot individual values for marker genes
+```{r, message=FALSE}
+par(mfrow = c(2,2))
+plot(NormValues["8692",], type = "p", main = "HMP1", ylab = "Normalised Exp Value", xlab = "Time", col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#HMP1
+plot(NormValues["510939",], type = "p", main = "CDC14", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#CDC14
+plot(NormValues["107869",], type = "p", main = "NPP1", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#NPP1
+plot(NormValues["576734",], type = "p", main = "TUB", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#TUB
+```
+
+
+Plot marker genes from XXXXXX study
+```{r, message=FALSE}
+par(mfrow = c(3,4))
+
+plot(NormValues["509625",], type = "p", main = "G6DPH", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#CDC14
+plot(NormValues["132086",], type = "p", main = "HGPRT", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#NPP1
+plot(NormValues["504296",], type = "p", main = "OPEL", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#TUB
+plot(NormValues["511117",], type = "p", main = "Ppi1", ylab = "Normalised Exp Value", xlab = "Time", col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#HMP1
+plot(NormValues["9669",], type = "p", main = "RL13", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#CDC14
+plot(NormValues["510859",], type = "p", main = "eEF1", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#NPP1
+plot(NormValues["511907",], type = "p", main = "eEF2", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#TUB
+plot(NormValues["511275",], type = "p", main = "TUB-A", ylab = "Normalised Exp Value", xlab = "Time", col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#HMP1
+plot(NormValues["576734",], type = "p", main = "TUB-B", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#CDC14
+plot(NormValues["510705",], type = "p", main = "Ubc", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#NPP1
+plot(NormValues["503425",], type = "p", main = "WS21", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#TUB
+plot(NormValues["509582",], type = "p", main = "WS41", ylab = "Normalised Exp Value", xlab = "Time",col = c(rep("red",5),rep("blue",5),rep("green",5),rep("magenta",5),rep("black",5)))#TUB
+```
+
+
+EdgeR DEG analysis
+------------------
+
+Find DEG
+```{r}
+fit <- glmFit(disp, design)
+lrt <- glmLRT(fit, coef=6:9) # differentially expressed genes
+lrt2 <- glmLRT(fit, coef=2:5) # differentially expressed genes due to batch effect
+FDR <- p.adjust(lrt$table$PValue, method="BH")
+sum(FDR < 0.05) # 
+FDR2 <- p.adjust(lrt2$table$PValue, method="BH")
+sum(FDR2 < 0.05)# 
+```
+
+
+
+This is an R Markdown document. More info at <http://rmarkdown.rstudio.com>.
