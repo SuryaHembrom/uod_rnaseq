@@ -15,8 +15,8 @@ Reading and filtering the data
 
 Read in all data
 ```{r}
-setwd("/Volumes/rstam/140822_STAR_FC/Inf2/")
-FcFiles = list.files(path="/Volumes/rstam/140822_STAR_FC/Inf2/", pattern="*.out.txt$")
+setwd("/path/to/STAR/FC/")
+FcFiles = list.files(path="/path/to/STAR/FC/", pattern="*.out.txt$")
 data <- lapply(FcFiles, read.table, sep="\t", header = TRUE)
 mdata = Reduce(function(...) merge(..., all=T), data)
 ```
