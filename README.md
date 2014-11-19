@@ -25,10 +25,10 @@ Path names need to be customised to the correct path
 
 #####Differential gene expression analysis
 featureCounts generates read count tables and summary statistics that can be analysed in R, using `edgeR`.
-Follow up in `R` scripts. `R Markdown` files can be found at http://www.compbio.dundee.ac.uk/user/rstam/internal/R_markdown/
+Follow up in `R` scripts 1,2 and 3. `R Markdown` files can be found at http://www.compbio.dundee.ac.uk/user/rstam/internal/R_markdown/
 
 #####Clustering and Heatmaps
-`edgeR` produces a table with differentially expressed genes. These genes can be clustered using `hclust` and a heatmap can be drawn using `heatmap2`. These analyses are described in scripts XXXXXX. `R Markdown` files are again [here](http://www.compbio.dundee.ac.uk/user/rstam/internal/R_markdown/).
+`edgeR` produces a table with differentially expressed genes. These genes can be clustered using `hclust` and a heatmap can be drawn using `heatmap2`. These analyses are described in R script 4. `R Markdown` files are again [here](http://www.compbio.dundee.ac.uk/user/rstam/internal/R_markdown/).
 
 
 
