@@ -23,5 +23,12 @@ Path names need to be customised to the correct path
 ./dirFeatureCountsEff.sh -i ~/OUTPUT_STAR/ -o ~/OUTPUT_FC/ -a /path/to/genome/databases/PhycaEff_manual.gtf
 ```
 
-featureCounts generates read count tables and summary statistics that can be analysed in R, using edgeR.
-Follow up in R Markdown files.
+#####Differential gene expression analysis
+featureCounts generates read count tables and summary statistics that can be analysed in R, using `edgeR`.
+Follow up in `R` scripts. `R Markdown` files can be found at http://www.compbio.dundee.ac.uk/user/rstam/internal/
+
+#####Clustering and Heatmaps
+`edgeR` produces a table with differentially expressed genes. These genes can be clustered using `hclust` and a heatmap can be drawn using `heatmap2`. These analyses are described in scripts XXXXXX. `R Markdown` files are again [here](http://www.compbio.dundee.ac.uk/user/rstam/internal/).
+
+
+
