@@ -1,9 +1,9 @@
 #Python
 
 
-#Takes the combined Phyca11 gff file, which was made by Gaetan. NR including CRN& RxLR
+#Takes the combined Phyca11 gff file, which was made by Gaetan Thilliez. nr including CRN and RxLR effectors
 #Reads in each line and amends the start & stop position to match 1000 bases upstream
-#Before doing so, some checks are needed
+#Before doing so, some checks are needed.
 
 
 fh = open('141027_Phyca11_effector.gtf', 'r')
