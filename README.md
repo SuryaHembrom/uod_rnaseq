@@ -40,8 +40,12 @@ bedtools getfasta -s -name -fi Phyca11_unmasked_genomic_scaffolds.fa -bed 141027
 
 #####Search for motifs using HOMER
 Required: exp-clusters file with cluster indicated for each gene
+
 Run `extract_cluster_sequences.py` to make fasta files for each cluster
+
 Run `create_subset.py` to make a single subset for all DEGs (as BG)
+
 Run `FilterFasta.py` to remove foreground from background sets
+
 Run `Runhomer.sh` to run `HOMER` with default settings on each cluster and background set.
 
