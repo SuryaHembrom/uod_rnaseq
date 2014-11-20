@@ -1,0 +1,121 @@
+---
+title: "Clustering and heatmap"
+author: "R. Stam"
+date: "19 November 2014"
+output: html_document
+---
+Loading required libraries and data
+------------------------------
+```{r,warning=FALSE}
+library(gplots) 
+library(ggplot2)
+library(RColorBrewer)
+library(reshape)
+DEG2 <- as.matrix(read.table("EdgeR_DEG2.txt"))
+
+```
+
+Hierarchical clustering and draw heatmap
+------------------------------
+hclust to do clustering. Dist. matrix is correlation.
+Also, all rows with no values are removed (just in case).
+The tree is cut at tree lenghth / 1.5. This generates 10 clusters.
+```{r,warning=FALSE}
+#DEG2 <- DEG2[rowMin(as.matrix(DEG2))>0,]
+hr <- hclust(as.dist(1-cor(t(DEG2), method="pearson")), method="complete") # Cluster rows by Pearson correlation.
+mycl <- cutree(hr, h=max(hr$height)/1.5) # Cut the tree at specific height and color the corresponding clusters in the heatmap color bar.
+mycolhc <- brewer.pal(9,"RdYlBu")
+mycolhc <- mycolhc[as.vector(mycl)]
+heatmap(DEG2, Rowv=as.dendrogram(hr), Colv=NA, scale="row", col=colorRampPalette(brewer.pal(9,"Blues"))(100), RowSideColors=mycolhc) 
+
+```
+
+
+Plotting expression profiles for all clusters
+--------------------------
+Data are extracted from clustering objects.
+Expression value files are specified.
+
+
+```{r}
+cut <- as.data.frame(mycl)
+cut$gene <- rownames(cut)
+colnames(cut) <- (c("cluster","gene"))
+data <- DEG2
+```
+
+Create a function to plot as many linegraphs as needed with all genes for a certain cluster in one graph
+
+```{r,warning=FALSE}
+#PLOT CLUSTERS
+multiplot <- function(..., plotlist=NULL, cols) {
+  require(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # Make the panel
+  plotCols = cols                          # Number of columns of plots
+  plotRows = ceiling(numPlots/plotCols) # Number of rows needed, calculated from # of cols
+  
+  # Set up the page
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(plotRows, plotCols)))
+  vplayout <- function(x, y)
+    viewport(layout.pos.row = x, layout.pos.col = y)
+  
+  # Make each plot, in the correct location
+  for (i in 1:numPlots) {
+    curRow = ceiling(i/plotCols)
+    curCol = (i-1) %% plotCols + 1
+    print(plots[[i]], vp = vplayout(curRow, curCol ))
+  }
+  
+}
+
+```
+
+Set all parameters required and loop over all things to draw plots and add to allPlots object
+```{r,warning=FALSE}
+
+clusters <- c(1:10)
+colln <- 5
+breaks <- axTicks(side=1)
+times <- c(0,4,8,16,24)
+allPlots <- list()
+
+
+for (i in c(seq(1,length(clusters), by=1))){
+  # extract the genes for the cluster
+  cluster <- cut[cut$cluster == clusters[i],]
+  clustergenes <- as.vector(cluster$gene)
+  cluslines <- data[clustergenes,]
+  
+  # melt the df
+  colnames(cluslines) <-times
+  df.melted <- melt(t(cluslines))
+  colnames(df.melted) <- c("times", "gene", "value")
+  df.melted$times <- factor(df.melted$times, levels=unique(df.melted$times))
+  # make plot variable
+  pl <- ggplot(data = df.melted, aes(x = times, y = value, colour = gene, group = gene)) +
+    geom_line() +
+    scale_y_continuous(breaks=breaks)
+  allPlots[[i]] <- pl + theme(legend.position = "none")
+         
+}
+
+multiplot(plotlist=allPlots, cols = colln)
+```
+
+Alternatively, plot boxplots which represent expression value spread for each of the clusters
+```{r, warning=FALSE}
+DGE <- DEG2
+colnames(DGE) <- c(0,4,8,16,24)
+ct2 <- cutree(hr, h=max(hr$height)/1.5)
+augDGE <- merge(DGE,as.data.frame(ct2),by="row.names")
+meltDGE <- melt(augDGE,c("Row.names","ct2"))
+ggplot(meltDGE,aes(x=as.factor(variable),y=log2(value))) + facet_grid(.~ct2) + geom_boxplot()
+```
+
