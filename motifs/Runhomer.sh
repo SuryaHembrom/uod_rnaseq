@@ -1,4 +1,7 @@
 #!/bin/bash
+
+## Quick bash script to run HOMER using fasta files for each cluster against a specific background file for each cluster.
+
 FILES=Clusters_*.txt
 
 
