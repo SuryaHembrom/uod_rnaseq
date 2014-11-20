@@ -1,0 +1,122 @@
+---
+title: "Read summaries _P. capsici_"
+author: "R. Stam"
+date: "5 November 2014"
+output: html_document
+---
+
+Reading summary data
+------------------------------
+Data comes from FeatureCounts run on data mapped with STAR.
+
+Read in datafiles, merge to data frame and calculate percentage of reads mapped to _P. capsici_ and total read number.
+
+```{r}
+setwd("/Volumes/rstam/141001_FC_with_effectors/")
+
+myFiles = list.files(path="/Volumes/rstam/141001_FC_with_effectors/", pattern="t.txt.summary")
+
+data <- lapply(myFiles, read.table, sep="\t", header = TRUE)
+
+merged.data.frame = Reduce(function(...) merge(..., all=T), data)
+rownames(merged.data.frame) <- as.vector(merged.data.frame[,1])
+merged.data.frame[,1] <- NULL
+
+merged.data.frame <- rbind(merged.data.frame, colSums(merged.data.frame))
+perc <- c(merged.data.frame[1,]/merged.data.frame[12,]*100)
+merged.data.frame[13,] <- perc
+rownames <- rownames(merged.data.frame[41])
+rownames[12:13] <- c("TotalReads","Percentage")
+rownames(merged.data.frame) <- rownames
+
+names <- substring(colnames(merged.data.frame),30,45)
+
+names <- c("c00_14","c16_14","c24_14","c04_14","c08_14",
+           "inf00_14","inf16_14","inf24_14","inf04_14","inf08_14",
+           "c00_22","c16_22","c24_22","c04_22","c08_22",
+           "inf00_22","inf16_22","inf24_22","inf04_22","inf08_22",
+           "c00_24","c16_24","c24_24","c04_24","c08_24",
+           "inf00_24","inf16_24","inf24_24","inf04_24","inf08_24",
+           "c00_28","c16_28","c24_28","c04_28","c08_28",
+           "inf00_28","inf16_28","inf24_28","inf04_28","inf08_28",
+           "inf00_31","inf16_31","inf24_31","inf04_31","inf08_31",
+           "c00_31","c16_31","c24_31","c04_31","c08_31",
+           "gc_a","gc_h","gc_i","gc_j","myc") 
+colnames(merged.data.frame) <- names
+```
+
+Redorder the dataframe to allow calsulations of means and standard errors for each run.
+Calculate means and standard errors
+```{r}
+ordered.data.frame <- merged.data.frame[,c(1,11,21,31,46,4,14,24,34,49,5,15,25,35,50,2,12,22,32,47,3,13,23,33,48,
+                                           6,16,26,36,41,9,19,29,39,44,10,20,30,40,45,7,17,27,37,42,8,18,28,38,43,
+                                           51,52,53,54,55)]
+x <- list(1:5, 6:10, 11:15, 16:20, 21:25, 26:30, 31:35, 36:40, 41:45, 46:50, 51:55)
+names2 <- c("c00","c04","c08","c16","c24","inf00","inf04","inf08","inf16","inf24","in vitro")
+df_means <- do.call(cbind, lapply(x, function(i) rowMeans(ordered.data.frame[, i])))
+colnames(df_means) <-names2
+
+sds1 <- do.call(cbind, lapply(x, function(i) sd(ordered.data.frame[1, i])))
+sds12 <- do.call(cbind, lapply(x, function(i) sd(ordered.data.frame[12, i])))
+sds13 <- do.call(cbind, lapply(x, function(i) sd(ordered.data.frame[13, i])))
+colnames(sds1) <-names2
+colnames(sds12) <-names2
+colnames(sds13) <-names2
+
+sterr <- function(x) sd(x, na.rm = TRUE)/sqrt(length(x))
+sterrs1 <- do.call(cbind, lapply(x, function(i) sterr(ordered.data.frame[1, i])))
+sterrs12 <- do.call(cbind, lapply(x, function(i) sterr(ordered.data.frame[12, i])))
+sterrs13 <- do.call(cbind, lapply(x, function(i) sterr(ordered.data.frame[13, i])))
+```
+
+Plot the graphs
+```{r}
+par(mfrow=c(1,3))
+
+bary <- barplot(df_means[12,1:10], ylab = "# of reads", xaxt = "n", space=1, ylim = c(0,35000000), main = "total reads")
+labels <- paste(colnames(df_means))
+text(c(2,4,6,8,10,12,14,16,18,20)-0.5, par("usr")[3] - 0.25, srt = 45, adj = 1,
+     labels = labels[1:10], xpd = TRUE)
+arrows(bary ,df_means[12,1:10]+sterrs12[1:10], bary, df_means[12,1:10], angle=90, code=1, length = 0.025)
+arrows(bary ,df_means[12,1:10]-sterrs12[1:10], bary, df_means[12,1:10], angle=90, code=1, length = 0.025)
+######
+bary <- barplot(df_means[1,1:10], ylab = "# of reads", xaxt = "n", space=1, ylim = c(0,1200000), main = "reads mapped to P capsici")
+labels <- paste(colnames(df_means))
+text(c(2,4,6,8,10,12,14,16,18,20)-0.5, par("usr")[3] - 0.25, srt = 45, adj = 1,
+     labels = labels[1:10], xpd = TRUE)
+arrows(bary ,df_means[1,1:10]+sterrs1[1:10], bary, df_means[1,1:10], angle=90, code=1, length = 0.025)
+arrows(bary ,df_means[1,1:10]-sterrs1[1:10], bary, df_means[1,1:10], angle=90, code=1, length = 0.025)
+#######
+bary <- barplot(df_means[13,1:10], ylab = "% of reads", xaxt = "n", space=1, ylim = c(0,6), main = "percentage mapped to P. capsici")
+labels <- paste(colnames(df_means))
+text(c(2,4,6,8,10,12,14,16,18,20)-0.5, par("usr")[3] - 0.25, srt = 45, adj = 1,
+     labels = labels[1:10], xpd = TRUE)
+arrows(bary ,df_means[13,1:10]+sterrs13[1:10], bary, df_means[13,1:10], angle=90, code=1, length = 0.025)
+arrows(bary ,df_means[13,1:10]-sterrs13[1:10], bary, df_means[13,1:10], angle=90, code=1, length = 0.025)
+```
+
+
+To understand the variation, we can plot the numbers for each individual run:
+```{r}
+## % of reads mapping to Pc
+par(mfrow=c(2,6))
+barplot(as.matrix(ordered.data.frame[13,1:5]), names.arg = colnames(ordered.data.frame[,1:5]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,6:10]), names.arg = colnames(ordered.data.frame[,6:10]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,11:15]), names.arg = colnames(ordered.data.frame[,11:15]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,16:20]), names.arg = colnames(ordered.data.frame[,16:20]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,21:25]), names.arg = colnames(ordered.data.frame[,21:25]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,51:55]), names.arg = colnames(ordered.data.frame[,51:55]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,26:30]), names.arg = colnames(ordered.data.frame[,26:30]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,31:35]), names.arg = colnames(ordered.data.frame[,31:35]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,36:40]), names.arg = colnames(ordered.data.frame[,36:40]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,41:45]), names.arg = colnames(ordered.data.frame[,41:45]), main = "% mapped") 
+barplot(as.matrix(ordered.data.frame[13,46:50]), names.arg = colnames(ordered.data.frame[,46:50]), main = "% mapped") 
+```
+
+We can conclude that the % mapped in control samples is extremely low <0.05 % in most cases. 
+In the in vitro stages (top right graph) the % reads mapped to _P. capcisi_ exceeds 60, confirming that are parameters are acceptible. 
+Infected leaf samples show a gradual increase of # or read and % or reads mapped to _P. capsici_, which is understandable as biomass increases.
+
+At the later timepoints there is one run that seems to cause the variation in % reads mapped for _P. capsici_ in the infected samples, because it has quite a lot more reads in it. Earlier timepoints are closer together.
+
+Next up, DEG analysis in control samples, to see if batch variation can cause problems.
