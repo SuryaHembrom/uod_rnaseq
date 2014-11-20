@@ -1,5 +1,7 @@
 ##The aim of this script is to extract seq from a fasta file and create a new fasta file
-
+##Script is based on a script by Gaetan Thilliez (PS, Uni of Dundee)
+##Amended to gene names for each cluster from a tabulated file and subtract these names from a large fasta file with upstream sequences
+##In this particular case, the table contains cluster information for all DEGs from RNASeq and the script writes out a fasta all DEGs minus cluster n
 
 def FilterFastaSeq (List, Fasta):
     """Start with a file that lists all the gene names per cluster and other attributes
