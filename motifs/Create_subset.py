@@ -1,6 +1,7 @@
 ##The aim of this script is to extract seq from a fasta file and create a new fasta file
 ##Script is based on a script by Gaetan Thilliez (PS, Uni of Dundee)
-##Amended to take a table with names and cluster number and extract sequences from a fasta file with upstream sequences
+##Amended to take all gene names from a tabulated file and extract all these names from a large fasta file with upstream sequences
+##In this particular case, the table contains all DEGs from RNASeq and the script writes out a fasta with these DEG.
 
 
 
