@@ -8,7 +8,7 @@ output: html_document
 Short script to calculate the number of genes that have reads assigned to them in out P capsici-tomato data
 Data comes from FeatureCounts run on data mapped with STAR.
 
-COunt number of genes with reads mapped to them
+Count number of genes with reads mapped to them
 ------------------------------
 
 Read data, merge data, 
